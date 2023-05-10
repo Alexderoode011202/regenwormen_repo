@@ -1,0 +1,18 @@
+how a player's round works:
+1. player gets to throw all 8 dice
+2. player can choose to keep a subset of the 8 dice as long as the amount of eyes on each die of the subset is equal.
+aka: [3,3,3], ["worms", "worms"]
+3. Once the player has chosen a specific subset, the player must throw with the dice that are not part of the subset.
+Again the player must form a new subset based on the same rule. However, keeping a new subset where each die has the same amount of eyes is the same compared to another subset is not allowed.
+A player can only stop with throwing if:
+    1.the player has enough points to get a tile from the table ^ has a subset containing worms
+    2.The player is able to steal the exposed tile from an opponent ^ has a subset containing worms
+4. If a player is unable to form a new (sub)set, the player loses his exposed tile if he has one, and has his turn ended
+
+
+game-state steps:
+0. determine whose turn it is
+1. throw dice
+2. give result to player
+3. let player (create subset/stop) V (lose)
+4. end turn

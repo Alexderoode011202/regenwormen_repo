@@ -34,6 +34,7 @@ class Player:
         self.points = 0
         self.worms = 0
         self.owned_tiles = []
+        self.subsets = dict()
 
     def get_tile(self, tile: Tile) -> None:
         """Gives the player a tile"""
