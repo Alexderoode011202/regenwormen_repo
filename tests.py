@@ -9,11 +9,16 @@ for _ in range(0,0):
     print('another test')
 """
 
-some_list = [1,2,3,4]
-another_list = [11,12,13,14]
+some_list = [1, 2, 3, 4]
+another_list = [11, 12, 13, 14]
 last = some_list.pop()
 
 print(some_list)
 print(print(tuple(zip(some_list, another_list))))
 
 
+for count, val in enumerate(another_list, start = 0):
+    print(f"count = {count}, value = {val}")
+
+print("some"
+      "test")

@@ -2,9 +2,9 @@
 This file will contain the classes and keep track of the game, whose turn it is and how has what amount of points
 """
 
-from needed_classes import Tile, Player, Dice, Tile_Move, Stop_Move
+from needed_classes import Tile, Player, Dice, Tile_Move, Stop_Move, Information_State
 import random
-from typing import Union, Dict, List
+from typing import Union, Dict, List, Iterable, Tuple
 
 
 def create_subsets(results: list) -> Dict[Union[int, str], Dict[str, Union[int, bool]]]:
@@ -111,18 +111,20 @@ class Gamestate:
             dice_results: List[str, int] = self.roll_dice(subset=8 - played_dice)
 
             # filter out illegal moves/dice
+            # maybe replace lower bit of code with function some day
             try:
                 for subset in player_subsets.keys():
                     for _ in range(dice_results.count(subset)):
                         dice_results.remove(subset)
             except KeyError:
-                continue
+                subset = subset
 
             # form all the possible subsets
             possible_subsets: dict = create_subsets(results=dice_results)
 
             # let player choose action/subset
-            player_action: Union[Tile_Move, Stop_Move] = leading_player.make_move(subset=possible_subsets)
+            player_action: Union[Tile_Move, Stop_Move] = leading_player.make_move(subset=possible_subsets,
+                                                                                  dice_results=dice_results, info_state=Information_State(players=self.players, tiles_on_table=self.available_tiles))
 
             # check whether player is done
             if player_action.get_type() == "stop" or "tile move":
@@ -135,15 +137,28 @@ class Gamestate:
 
                     # execute tile exchange
                     leading_player.add_tile((victim.take_tile()))
+            else:
+                continue
 
     def calculate_winner(self):
         scoreboard: dict = dict()
         for player in self.players:
             scoreboard[player.name] = player.worms
 
-        winner: str
+        highest_score: int = 0
+        winner: str = ""
+        for player, score in tuple(zip(tuple(scoreboard.keys()), tuple(scoreboard.values()))):
+            if score > highest_score:
+                highest_score = score
+                winner = player
+            elif (score == highest_score) and (score != 0):
+                winner += f" and {player}"
 
+        # announce winner:
+        print(f"The winner is: {winner} with {highest_score} worms!")
 
+        # POTENTIALLY RETURN SOMETHING LATER
+        return None
 
     def get_dice(self) -> List[Dice]:
         return self.full_dice_list.copy()
@@ -154,3 +169,6 @@ class Gamestate:
         for die in dice_set:
             results.append(die.roll())
         return results
+
+
+
