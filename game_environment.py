@@ -2,17 +2,17 @@
 This file will contain the classes and keep track of the game, whose turn it is and how has what amount of points
 """
 
-from needed_classes import Tile, Player, Dice
+from needed_classes import Tile, Player, Dice, Tile_Move, Stop_Move
 import random
 from typing import Union, Dict, List
 
 
-def create_subsets(results) -> Dict[Union[int, str], Dict[str, Union[int, bool]]]:
+def create_subsets(results: list) -> Dict[Union[int, str], Dict[str, Union[int, bool]]]:
     """
     Creates the subsets based on what was thrown.
     The subsets get returned in the form of a nested dictionary.
     The keys of the main dictionary are the values that a die can give.
-    the values of the main dictionary contain which contain the total_value and word_presence
+    the values of the main dictionary contain which contain the total_value, word_presence, and frequency
     """
     subsets: dict = dict()
     for result in results:
@@ -29,7 +29,9 @@ def create_subsets(results) -> Dict[Union[int, str], Dict[str, Union[int, bool]]
             if result == "worm":
                 worm_presence = True
 
-            subsets[result] = {"total_value": total_value, "worm_presence": worm_presence}
+            subsets[result] = {"total_value": total_value,
+                               "worm_presence": worm_presence,
+                               "frequency": frequency}
 
     return subsets
 
@@ -81,9 +83,67 @@ class Gamestate:
             self.leader = self.players[0]
 
     def play_round(self) -> None:
+        """
+        Checks which player can play.
+        After rolling dice the player can choose to:
+        1. keep rolling dice
+        2. take a tile from table/player
+        3. stop/lose tile
+        """
+
+        # get leading player and his status
         leading_player: Player = self.get_leading_player()
-        leading_player.make_move()
-        self.assign_new_leader()
+        leader_stops: bool = False
+
+        while not leader_stops:
+            # check how many dice he has
+            player_subsets: dict = leading_player.get_subsets()
+            played_dice: int = 0
+
+            try:
+                for subset in player_subsets:
+                    played_dice += subset["frequency"]
+
+            except KeyError:
+                played_dice = 0
+
+            # roll the dice
+            dice_results: List[str, int] = self.roll_dice(subset=8 - played_dice)
+
+            # filter out illegal moves/dice
+            try:
+                for subset in player_subsets.keys():
+                    for _ in range(dice_results.count(subset)):
+                        dice_results.remove(subset)
+            except KeyError:
+                continue
+
+            # form all the possible subsets
+            possible_subsets: dict = create_subsets(results=dice_results)
+
+            # let player choose action/subset
+            player_action: Union[Tile_Move, Stop_Move] = leading_player.make_move(subset=possible_subsets)
+
+            # check whether player is done
+            if player_action.get_type() == "stop" or "tile move":
+                leader_stops = True
+
+                # Deal with tile exchange
+                if player_action == "tile move":
+                    # collect info
+                    victim: Player = player_action.get_origin()
+
+                    # execute tile exchange
+                    leading_player.add_tile((victim.take_tile()))
+
+    def calculate_winner(self):
+        scoreboard: dict = dict()
+        for player in self.players:
+            scoreboard[player.name] = player.worms
+
+        winner: str
+
+
 
     def get_dice(self) -> List[Dice]:
         return self.full_dice_list.copy()
@@ -94,13 +154,3 @@ class Gamestate:
         for die in dice_set:
             results.append(die.roll())
         return results
-
-    def check_validity(self, current_results: dict[Union[str, int], int]):
-        """
-        Checks the validity of the moves a player could make
-        and filters out the illegal ones
-        """
-
-        pass
-
-

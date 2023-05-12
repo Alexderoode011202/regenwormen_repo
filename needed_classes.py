@@ -28,6 +28,7 @@ class Tile:
     def __str__(self) -> str:
         return f"Tile(points: {self.points}, worms: {self.worms})"
 
+
 class Player:
     def __init__(self, name: str):
         self.name = name
@@ -46,10 +47,49 @@ class Player:
     def take_tile(self):
         return self.owned_tiles.pop()
 
-    def make_move(self) -> None:
-        """Allows player to make a move"""
+    def add_tile(self, tile: Tile):
+        self.owned_tiles.append(tile)
+
+
+    def make_move(self, subset: dict) -> Union["Stop_Move", "Tile_Move"]:
+        """
+        Allows player to make a move.
+        The player can make three types of choice
+        """
+
         pass
 
+    def get_subsets(self):
+        return self.subsets
 
+
+class Move:
+    def __init__(self, move_type: str):
+        self.type = move_type
+
+    def get_type(self) -> str:
+        return self.type
+
+
+class Tile_Move(Move):
+    def __init__(self, tile: Tile, player: Player = None):
+        super().__init__(move_type="tile move")
+        self.tile = tile
+        self.from_player = player
+
+    def get_origin(self) -> Union[Player, None]:
+        return self.from_player
+
+    def get_tile(self) -> Tile:
+        return self.tile
+
+
+class Stop_Move(Move):
+    def __init__(self):
+        super().__init__(move_type="stop")
+
+
+"""
 some_die: Dice = Dice()
 print(some_die.roll())
+"""

@@ -16,3 +16,7 @@ game-state steps:
 2. give result to player
 3. let player (create subset/stop) V (lose)
 4. end turn
+
+upper-steps:
+1.loop through users until there are no more available tiles
+2.count amount of worms and declare winner(s)
