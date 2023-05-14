@@ -35,7 +35,13 @@ class Player:
         self.points = 0
         self.worms = 0
         self.owned_tiles = []
-        self.subsets = dict()
+        self.subsets: dict = {"eyes_per_die": [],
+                              "frequency": [],
+                              }
+
+
+    def __str__(self) -> str:
+        return f"{self.name} with {self.worms} worms with {self.check_top_tile()} as top tile"
 
     def get_tile(self, tile: Tile) -> None:
         """Gives the player a tile"""
@@ -54,12 +60,22 @@ class Player:
     def add_tile(self, tile: Tile):
         self.owned_tiles.append(tile)
 
-    def make_move(self, subset: dict, dice_results, info_state: "Information_State") -> Union["Stop_Move", "Tile_Move"]:
+    def make_move(self, subset: dict, dice_results, info_state: "Information_State") -> Union["Stop_Move", "Tile_Move", "Subset_Move"]:
         """
         Allows player to make a move.
         The player can make three types of choice.
         This method is optimized for human use
+
+        :param subset: contains all the subsets one can make
+        :param dice_results: is a list containing the dice results.
+        :param info_state": is an Information_State object
+        containing all the info needed to gather information
+        and make informed decisions
+        :returns: something like a Move object containing the player's decision
         """
+        no_choice: bool = False
+        if subset == dict():
+            no_choice = True
 
         ## get all the information needed
         # Show what has been thrown
@@ -69,45 +85,116 @@ class Player:
                 string_format = str(value)
             else:
                 string_format += f", {value}"
-        print(string_format)
-        print("\n")
+        print(f"DICE RESULTS: {string_format}")
+
+        # show player's current score:
+        print(f"Own score is: {self.points} points.")
+
+        # show what tiles are available in what way
+        for player in info_state.get_all_players():
+            if player == self:
+                continue
+            else:
+                # print(f"{player} has: {player.check_top_tile()}")
+                continue
+        for tile in info_state.get_tiles_on_table():
+            print(f"The table has: {tile}")
+
         # Show other players and their tiles
         print("Players:")
         players_and_tiles: dict = info_state.get_stealable_tiles()
         for player in players_and_tiles:
             print(f"-{player} with {players_and_tiles[player]}")
-        print("\n")
+
+        # portray all possibilities
+        if not no_choice:
+            for num, possibility in enumerate(subset):
+                print(f"[{num + 1}] eye: {possibility}, ")
+                print(f"total value: {subset[possibility]['total_value']}, ")
+                print(f"worm presence: {subset[possibility]['worm_presence']}, ")
+                print(f"frequency: {subset[possibility]['frequency']}")
+                print('---------')
+        else:
+            print("YOU CANNOT CHOOSE ANY SUBSETS")
 
         # show your options:
         choice: str = ""
-        while choice != "1" or "2" or "3":
-            print("give a number to make your choice")
-            print("[1] choose a subset and keep playing")
-            print("[2] Take a tile from the table or from another player")
-            choice = input("[3] Give up\n")
+        if not no_choice:
+            while choice != "1" and choice != "2" and choice != "3":
+                print(f"choice: {choice}")
+                print("give a number to make your choice")
+                print("[1] choose a subset and keep playing")
+                print("[2] Take a tile from the table or from another player")
+                choice = input("[3] Give up\n")
+
+        else:
+            while choice != "2" and choice != "3":
+                print(f"choice: {choice}")
+                print("give a number to make your choice")
+                print("[2] Take a tile from the table or from another player")
+                choice = input("[3] Give up\n")
+
+
 
         if choice == "1":
             # If deciding to keep playing
-            subset_choice: str = ""
-            while subset_choice not in list(subset.keys()):
-                for num, possibility in enumerate(subset, start=1):
-                    print(f"[{num}] eye: {possibility}, "
-                          f"total value: {possibility['total_value']}, "
-                          f"worm presence: {possibility['worm_presence']}, "
-                          f"frequency: {possibility['frequency']}")
+            # let player choose subset
+            subset_choice = input("choose the value of eyes per die you wish to keep\n")
 
-                subset_choice = input("choose the value of eyes per die you wish to keep")
+            # process player choice
+            try:
+                subset_choice = int(subset_choice)
+            except:
+                subset_choice = "worm"
+
+            chosen_subsets = subset[subset_choice]
+            return Subset_Move(chosen_subset=chosen_subsets)
 
         elif choice == "2":
             # if choosing to take a tile instead
-            pass
+            # Choose value of tile you want:
+            tile_value: int = int(input("What is the point value of the tile you want?:\n"))
+
+            # check whether tile is from table:
+            for tile in info_state.get_tiles_on_table():
+                if tile.get_points() == tile_value:
+                    # return if that's the case
+                    if self.points >= tile.get_points():
+                        return Tile_Move(tile=tile, player=None)
+                    else:
+                        print(f"TILE CANNOT BE CHOSEN: YOU HAVE: {self.points} POINTS. TILE POINT VALUE IS: {tile.get_points()}")
+
+            # check whether tile is stealable
+            for player in info_state.get_stealable_tiles():
+                if info_state.get_stealable_tiles()[player].get_points() == self.points:
+                    return Tile_Move(tile=info_state.get_stealable_tiles()[player], player=player)
 
         else:
             # if choosing to give up
-            pass
+            return Stop_Move()
 
-    def get_subsets(self):
+    def get_subset(self):
         return self.subsets
+
+    def add_subset(self, subset:  Dict[Union[str, int], Dict[str, int]]) -> None:
+        frequency: int
+        eyes: Union[int, str]
+        for key in subset:
+            try:
+                old_values: list = self.subsets[key]
+                old_values.append(subset[key])
+                if key == "eyes_per_die":
+                    eyes = subset[key]
+                    if eyes == "worm":
+                        eyes = 5
+                elif key == "frequency":
+                    frequency = subset[key]
+
+            except KeyError:
+                continue
+
+        self.points += (frequency * eyes)
+        return None
 
 
 class Move:
@@ -136,6 +223,15 @@ class Stop_Move(Move):
         super().__init__(move_type="stop")
 
 
+class Subset_Move(Move):
+    def __init__(self, chosen_subset: Dict[Union[str, int], Dict[str, int]]) -> None:
+        super().__init__(move_type="subset move")
+        self.subsets = chosen_subset
+
+    def get_current_subsets(self) -> Dict[Union[str, int], Dict[str, int]]:
+        return self.subsets
+
+
 class Information_State:
     def __init__(self, players: Iterable[Player], tiles_on_table: Iterable[Tile]):
         self.players = players
@@ -152,10 +248,3 @@ class Information_State:
         for player in self.get_all_players():
             player_tile_dict[player] = player.check_top_tile()
         return player_tile_dict
-
-
-
-"""
-some_die: Dice = Dice()
-print(some_die.roll())
-"""
