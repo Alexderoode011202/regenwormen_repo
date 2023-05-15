@@ -16,7 +16,10 @@ def play_game(players: Dict[str, Optional[Player]]) -> None:
     # formalize the gamestate
     state: Gamestate = Gamestate(players=players)
 
-    state.play_round()
+    while state.get_winner() == None:
+        print(f"It's {state.get_leading_player()} his/her turn")
+        state.play_round()
+        state.assign_new_leader()
 
 
 play_game({"test subject 1": None, "test subject 2": None})

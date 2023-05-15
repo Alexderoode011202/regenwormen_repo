@@ -60,7 +60,7 @@ class Player:
     def add_tile(self, tile: Tile):
         self.owned_tiles.append(tile)
 
-    def make_move(self, subset: dict, dice_results, info_state: "Information_State") -> Union["Stop_Move", "Tile_Move", "Subset_Move"]:
+    def make_move(self, subset: dict, dice_results, info_state: "Information_State") -> Union["Stop_Move", "Tile_Move", "Subset_Move", "Error_Move"]:
         """
         Allows player to make a move.
         The player can make three types of choice.
@@ -134,8 +134,6 @@ class Player:
                 print("[2] Take a tile from the table or from another player")
                 choice = input("[3] Give up\n")
 
-
-
         if choice == "1":
             # If deciding to keep playing
             # let player choose subset
@@ -147,8 +145,17 @@ class Player:
             except:
                 subset_choice = "worm"
 
+            # check whether player wants to roll again
+            again: Union[str, bool] = ""
+            while not(again.lower() == "y" or again.lower() == "n"):
+                again: str = input("Do you want to roll again? (y/n)")
+            if again == "y":
+                again = True
+            else:
+                again = False
+
             chosen_subsets = subset[subset_choice]
-            return Subset_Move(chosen_subset=chosen_subsets)
+            return Subset_Move(chosen_subset=chosen_subsets, roll_again=again)
 
         elif choice == "2":
             # if choosing to take a tile instead
@@ -157,18 +164,22 @@ class Player:
 
             # check whether tile is from table:
             for tile in info_state.get_tiles_on_table():
+                # selects tile chosen by player
                 if tile.get_points() == tile_value:
                     # return if that's the case
                     if self.points >= tile.get_points():
                         return Tile_Move(tile=tile, player=None)
                     else:
                         print(f"TILE CANNOT BE CHOSEN: YOU HAVE: {self.points} POINTS. TILE POINT VALUE IS: {tile.get_points()}")
-
+                        return Error_Move()
             # check whether tile is stealable
+            print(info_state.get_stealable_tiles())
             for player in info_state.get_stealable_tiles():
-                if info_state.get_stealable_tiles()[player].get_points() == self.points:
-                    return Tile_Move(tile=info_state.get_stealable_tiles()[player], player=player)
-
+                try:
+                    if info_state.get_stealable_tiles()[player].get_points() == self.points:
+                        return Tile_Move(tile=info_state.get_stealable_tiles()[player], player=player)
+                except AttributeError:
+                    continue
         else:
             # if choosing to give up
             return Stop_Move()
@@ -224,12 +235,16 @@ class Stop_Move(Move):
 
 
 class Subset_Move(Move):
-    def __init__(self, chosen_subset: Dict[Union[str, int], Dict[str, int]]) -> None:
+    def __init__(self, chosen_subset: Dict[Union[str, int], Dict[str, int]], roll_again: bool) -> None:
         super().__init__(move_type="subset move")
         self.subsets = chosen_subset
+        self.roll_again: bool = roll_again
 
     def get_current_subsets(self) -> Dict[Union[str, int], Dict[str, int]]:
         return self.subsets
+
+    def check_roll_again(self) -> bool:
+        return self.roll_again
 
 
 class Information_State:
@@ -248,3 +263,9 @@ class Information_State:
         for player in self.get_all_players():
             player_tile_dict[player] = player.check_top_tile()
         return player_tile_dict
+
+
+class Error_Move(Move):
+    def __init__(self) -> None:
+        super().__init__(move_type="error move")
+
