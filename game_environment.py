@@ -6,6 +6,10 @@ from needed_classes import Tile, Player, Dice, Tile_Move, Stop_Move, Information
 import random
 from typing import Union, Dict, List, Iterable, Tuple, Optional
 
+class IllegalMoveError(Exception):
+    def __init__(self):
+        super().__Init__()
+
 
 def create_subsets(results: list) -> Dict[Union[int, str], Dict[str, Union[int, bool]]]:
     """
@@ -154,8 +158,18 @@ class Gamestate:
                 else:
                     continue
 
-            # let player make move:
-            player_move: Union[Tile_Move, Stop_Move, Subset_Move, Error_Move] = leading_player.make_move(subset=filtered_subsets, dice_results=dice_results,info_state= Information_State(players= self.players, tiles_on_table=self.available_tiles))
+            # dont let player play in case of no possible subsets and player rolled dice again:
+            try:
+                if filtered_subsets == dict() and player_move.check_roll_again():
+                    print(f"{leading_player} CANNOT MAKE A MOVE DUE TO LACK OF SUBSETS")
+                    player_move = Stop_Move()
+                else:
+                    # let player make move:
+                    player_move = leading_player.make_move(subset=filtered_subsets, dice_results=dice_results, info_state=Information_State(players=self.players, tiles_on_table=self.available_tiles))
+            except:
+                player_move = leading_player.make_move(subset=filtered_subsets, dice_results=dice_results,
+                                                       info_state=Information_State(players=self.players,
+                                                                                    tiles_on_table=self.available_tiles))
 
             # process player move:
             if player_move.get_type() != "subset move" and player_move.get_type() != "error move":
@@ -172,6 +186,12 @@ class Gamestate:
                     # from table
                     else:
                         leading_player.add_tile(self.give_tile(player_move.get_tile()))
+                # If player gives up
+                else:
+                    self.remove_tile_from_table()
+                    if self.available_tiles == []:
+                        winner = self.get_winner()
+
 
             # if subset move:
             else:
@@ -185,6 +205,9 @@ class Gamestate:
                     # POSSIBLE
         # self.assign_new_leader()
         print("ROUND HAS ENDED")
+
+    def remove_tile_from_table(self) -> None:
+        self.available_tiles.pop()
 
     def calculate_winner(self):
         scoreboard: dict = dict()
@@ -219,9 +242,18 @@ class Gamestate:
     def get_winner(self) -> Optional[Player]:
         return self.winner
 
-    def assign_winner(self, player: Player) -> None:
-        self.winner = player
-        return None
+    def calculate_winner(self) -> Player:
+        winner = None
+        max_worms = 0
+        for player in self.players:
+            if player.worms > max_worms:
+                winner = player
+                max_worms = player.worms
+            else:
+                continue
+
+        self.winner = winner
+
 
     def give_tile(self, tile: Tile) -> Tile:
         return self.available_tiles.pop(self.available_tiles.index(tile))

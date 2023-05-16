@@ -60,7 +60,7 @@ class Player:
     def add_tile(self, tile: Tile):
         self.owned_tiles.append(tile)
 
-    def make_move(self, subset: dict, dice_results, info_state: "Information_State") -> Union["Stop_Move", "Tile_Move", "Subset_Move", "Error_Move"]:
+    def make_move(self, subset: dict, dice_results, info_state: "Information_State", old_move: Optional["Subset_Move"] = None) -> Union["Stop_Move", "Tile_Move", "Subset_Move", "Error_Move"]:
         """
         Allows player to make a move.
         The player can make three types of choice.
