@@ -9,16 +9,7 @@ for _ in range(0,0):
     print('another test')
 """
 
-some_list = [1, 2, 3, 4]
-another_list = [11, 12, 13, 14]
-last = some_list.pop()
+some_dict = {1: 2, 3: 4, 5:6}
 
-print(some_list)
-print(print(tuple(zip(some_list, another_list))))
-
-
-for count, val in enumerate(another_list, start = 0):
-    print(f"count = {count}, value = {val}")
-
-print("some"
-      "test")
+for value in some_dict.values():
+    print(value)

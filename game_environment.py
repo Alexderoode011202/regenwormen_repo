@@ -1,10 +1,11 @@
 """
 This file will contain the classes and keep track of the game, whose turn it is and how has what amount of points
 """
-
-from needed_classes import Tile, Player, Dice, Tile_Move, Stop_Move, Information_State, Subset_Move, Error_Move
 import random
-from typing import Union, Dict, List, Iterable, Tuple, Optional
+from needed_classes import Tile, Player, Dice, Stop_Move, Information_State
+
+from typing import Union, Dict, List, Optional
+
 
 class IllegalMoveError(Exception):
     def __init__(self):
@@ -50,7 +51,7 @@ def validity_dice_check(used_values: dict) -> int:
     """
 
     amount_used_dice: int = 0
-    print(f"USED VALUES: {used_values}")
+    # print(f"USED VALUES: {used_values}")
     for frequency in used_values["frequency"]:
         amount_used_dice += frequency
 
@@ -134,14 +135,14 @@ class Gamestate:
             player_subsets: dict = leading_player.get_subset()
             played_dice: int = validity_dice_check(player_subsets)
             try:
-                print(f"last move was: {player_move.get_type()}")
-                print(f"want to roll again:{player_move.check_roll_again()}")
+                # print(f"last move was: {player_move.get_type()}")
+                # print(f"want to roll again:{player_move.check_roll_again()}")
                 if player_move.get_type() == "subset move":
                     if not player_move.check_roll_again():
-                        print("KEEP DICE RESULTS")
+                        # print("KEEP DICE RESULTS")
                         dice_results = dice_results
                     else:
-                        print("DONT KEEP DICE RESULTS")
+                        # print("DONT KEEP DICE RESULTS")
                         dice_results = self.roll_dice(subset=8 - played_dice)
             except:
                 dice_results: List[Union[int, str]] = self.roll_dice(subset=8 - played_dice)
@@ -161,11 +162,14 @@ class Gamestate:
             # dont let player play in case of no possible subsets and player rolled dice again:
             try:
                 if filtered_subsets == dict() and player_move.check_roll_again():
-                    print(f"{leading_player} CANNOT MAKE A MOVE DUE TO LACK OF SUBSETS")
+                    # print(f"{leading_player} CANNOT MAKE A MOVE DUE TO LACK OF SUBSETS")
                     player_move = Stop_Move()
                 else:
                     # let player make move:
-                    player_move = leading_player.make_move(subset=filtered_subsets, dice_results=dice_results, info_state=Information_State(players=self.players, tiles_on_table=self.available_tiles))
+                    player_move = leading_player.make_move(subset=filtered_subsets,
+                                                           dice_results=dice_results,
+                                                           info_state=Information_State(players=self.players,
+                                                                                        tiles_on_table=self.available_tiles))
             except:
                 player_move = leading_player.make_move(subset=filtered_subsets, dice_results=dice_results,
                                                        info_state=Information_State(players=self.players,
@@ -177,7 +181,7 @@ class Gamestate:
 
                 # if tile move:
                 if player_move.get_type() == "tile move":
-                    print("REACHED")
+                    # print("REACHED")
                     # move tile to player:
                     # from player
                     if player_move.get_origin() is not None:
@@ -189,7 +193,7 @@ class Gamestate:
                 # If player gives up
                 else:
                     self.remove_tile_from_table()
-                    if self.available_tiles == []:
+                    if not self.available_tiles:
                         winner = self.get_winner()
 
 
@@ -197,7 +201,7 @@ class Gamestate:
             else:
                 if player_move.get_type() == "subset move":
                     leading_player.add_subset(player_move.get_current_subsets())
-                    print(f"previously chosen: {leading_player.get_subset()['eyes_per_die']}")
+                    # print(f"previously chosen: {leading_player.get_subset()['eyes_per_die']}")
                 else:
                     print("TRY AGAIN")
 
