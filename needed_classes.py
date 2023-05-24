@@ -55,10 +55,12 @@ class Player:
         return top_tile
 
     def take_tile(self):
+        self.worms -= self.owned_tiles[-1].get_worms()
         return self.owned_tiles.pop()
 
     def add_tile(self, tile: Tile):
         self.owned_tiles.append(tile)
+        self.worms += tile.get_worms()
 
     def make_move(self, subset: dict, dice_results, info_state: "Information_State", old_move: Optional["Subset_Move"] = None) -> Union["Stop_Move", "Tile_Move", "Subset_Move", "Error_Move"]:
         """

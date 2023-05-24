@@ -20,9 +20,15 @@ def play_game(players: Dict[str, Optional[Player]]) -> None:
     state: Gamestate = Gamestate(players=players)
 
     while state.get_winner() is None:
-        print(f"It's {state.get_leading_player()} his/her turn")
-        state.play_round()
-        state.assign_new_leader()
+        if state.available_tiles:
+            print(f"It's {state.get_leading_player()} his/her turn")
+            state.play_round()
+            state.assign_new_leader()
+        else:
+            print("GAME ENDED\nCALCULATE WINNER:")
+            state.calculate_winner()
+            break
+    print(state.get_winner())
 
 
-play_game({"test subject 1": None, "test subject 2": Simplest_Bot()})
+play_game({"test subject 1": Simplest_Bot(), "test subject 2": Simplest_Bot()})

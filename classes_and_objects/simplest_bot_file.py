@@ -38,9 +38,11 @@ class Simplest_Bot(Player):
         tiles_on_table: List[Tile] = info_state.get_tiles_on_table()
         tiles_on_table.sort(key=lambda x: x.get_points())
         stealable_tiles: Dict[Player, Optional[Tile]] = info_state.get_stealable_tiles()
+        # LIST == []
         lowest_tile: Tile = tiles_on_table[0]
         lowest_value: int = 0
         print(f"LOWEST TILE TEST: {lowest_tile.get_points()}")
+        print(f"HIGHEST TILE TEST: {tiles_on_table[-1].get_points()}")
         print("---------")
         if got_worms:
             print("PASSED 1")

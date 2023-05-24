@@ -213,25 +213,35 @@ class Gamestate:
     def remove_tile_from_table(self) -> None:
         self.available_tiles.pop()
 
+    def test_func(self):
+        print("TEST TEST TEST")
+
+
     def calculate_winner(self):
         scoreboard: dict = dict()
         for player in self.players:
-            scoreboard[player.name] = player.worms
+            print(f"player: {player}, worms: {player.worms}")
+            scoreboard[player] = player.worms
 
+        print("----------------")
+        print(self.players)
+        print(scoreboard)
+        print("----------------")
         highest_score: int = 0
-        winner: str = ""
-        for player, score in tuple(zip(tuple(scoreboard.keys()), tuple(scoreboard.values()))):
-            if score > highest_score:
-                highest_score = score
+        winner: Optional[Player] = None
+        for player in scoreboard:
+            if scoreboard[player] > highest_score:
+                print(f"high_score: {highest_score}, own score: {scoreboard[player]}")
                 winner = player
-            elif (score == highest_score) and (score != 0):
-                winner += f" and {player}"
+                highest_score = scoreboard[player]
 
         # announce winner:
         print(f"The winner is: {winner} with {highest_score} worms!")
+        self.winner = winner
 
         # POTENTIALLY RETURN SOMETHING LATER
         return None
+
 
     def get_dice(self) -> List[Dice]:
         return self.full_dice_list.copy()
@@ -246,6 +256,7 @@ class Gamestate:
     def get_winner(self) -> Optional[Player]:
         return self.winner
 
+    """
     def calculate_winner(self) -> Player:
         winner = None
         max_worms = 0
@@ -257,7 +268,7 @@ class Gamestate:
                 continue
 
         self.winner = winner
-
+    """
 
     def give_tile(self, tile: Tile) -> Tile:
         return self.available_tiles.pop(self.available_tiles.index(tile))
